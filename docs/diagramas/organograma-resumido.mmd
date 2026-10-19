@@ -1,0 +1,14 @@
+flowchart TB
+    P["PAINEL NOVAGENTE<br/>PWA + Login"]
+    P --> C["CRM e Atendimento"]
+    P --> A["Agendamentos"]
+    P --> M["Memória Inteligente"]
+    C <--> W["WhatsApp / WAHA"]
+    A <--> G["Google Agenda e Meet"]
+    M --> F["Transcrição local"]
+    M --> I["Análise por IA"]
+    I --> T["Tarefas aprovadas"]
+    C --> D[("PostgreSQL")]
+    A --> D
+    M --> D
+    T --> D

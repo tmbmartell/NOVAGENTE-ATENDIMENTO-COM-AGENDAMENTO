@@ -2,6 +2,19 @@
 
 **PAINEL NOVAGENTE** — atendimento WhatsApp, oportunidades, agenda e memória inteligente de reuniões.
 
+
+![Imagem de referência: arquitetura do PAINEL NOVAGENTE, com PWA, Atendimento e CRM, Agenda e Meet, Memória Inteligente, WAHA, transcrição local, IA, tarefas e armazenamento privado.](docs/assets/arquitetura-novagente-atendimento-agendamento.png)
+
+## Sinopse do produto
+
+O **NOVAGENTE ATENDIMENTO COM AGENDAMENTO** é um painel que conecta a jornada de um cliente — **mensagem, atendimento, oportunidade, compromisso e acompanhamento** — em um mesmo lugar. A equipe pode registrar reuniões autorizadas, obter a transcrição local e transformar decisões em tarefas revisadas, sem perder o histórico comercial.
+
+A ideia é simples: **uma conversa não termina quando o cliente para de falar; ela continua até o que foi combinado acontecer.**
+
+A imagem acima mostra a relação entre as áreas. Os recursos externos, como Google Agenda/Meet e modelos de IA, exigem configurações e autorizações próprias. A gravação é feita pela NOVAGENTE de forma independente da função nativa de gravação do Meet.
+
+**Leia a [sinopse completa, explicada módulo por módulo](docs/SINOPSE.md), ou abra o [organograma técnico editável](docs/ARQUITETURA.md).**
+
 ## Organograma da arquitetura
 
 Visualização direta no GitHub. Veja o [organograma completo e os fluxos técnicos](docs/ARQUITETURA.md).

@@ -1,5 +1,12 @@
 # Arquitetura — NOVAGENTE ATENDIMENTO COM AGENDAMENTO
 
+
+![Imagem de referência da arquitetura: PWA, CRM, agenda, memória inteligente, integrações e banco de dados](assets/arquitetura-novagente-atendimento-agendamento.png)
+
+**Como ler este diagrama:** o PAINEL NOVAGENTE centraliza três frentes: atendimento, agendamentos e memória de reuniões. O WhatsApp e o Google Agenda são integrações; o Faster-Whisper é o transcritor local; o motor de IA propõe resumos e tarefas, mediante autorização. A base de dados guarda o histórico separado por empresa. Os processos detalhados aparecem abaixo em Mermaid, para que o desenho continue editável.
+
+Para uma visão de produto voltada a clientes, consulte a [sinopse do sistema](SINOPSE.md).
+
 Diagrama de arquitetura renderizado pelo GitHub usando Mermaid. Representa a implementação e suas integrações opcionais, sem confundir recursos prontos com planejados.
 
 ## Organograma geral
