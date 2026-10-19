@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Archivo, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
 import { accentCssVariables, DEFAULT_BRANDING } from "@/lib/branding";
 import { faviconHref } from "@/lib/favicon";
 import { normalizeThemePreference, THEME_COOKIE } from "@/lib/theme";
 import { getBranding } from "@/server/branding";
+import { PwaRuntime } from "@/components/pwa/pwa-runtime";
 
 
 import "./globals.css";
@@ -32,6 +33,12 @@ const plexMono = IBM_Plex_Mono({
 
 export const dynamic = "force-dynamic";
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0c372f",
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const branding = await getBranding().catch(() => DEFAULT_BRANDING);
   return {
@@ -39,7 +46,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description: "Central inteligente de atendimento, clientes, negócios e automações da NOVAGENTE.",
     // El `?v=` cambia con la marca: los navegadores guardan el favicon con una
     // insistencia notable y, sin eso, el logo nuevo tarda días en aparecer.
-    icons: { icon: faviconHref(branding) },
+    applicationName: "PAINEL NOVAGENTE",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "NOVAGENTE" },
+    icons: {
+      icon: faviconHref(branding),
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
   };
 }
 
@@ -64,7 +77,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: accentCssVariables(branding.accent) }}
         />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans">{children}<PwaRuntime /></body>
     </html>
   );
 }

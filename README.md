@@ -2,6 +2,30 @@
 
 **PAINEL NOVAGENTE** — atendimento WhatsApp, oportunidades, agenda e memória inteligente de reuniões.
 
+## Organograma da arquitetura
+
+Visualização direta no GitHub. Veja o [organograma completo e os fluxos técnicos](docs/ARQUITETURA.md).
+
+```mermaid
+flowchart TB
+  U["Equipe e clientes<br/>PWA Android • iPhone • Computador"] --> N["PAINEL NOVAGENTE<br/>HTTPS • Login • Interface Next.js"]
+  N --> C["Atendimento e CRM<br/>Leads • Conversas • Funil"]
+  N --> A["Agendamento<br/>Eventos e link Meet"]
+  N --> M["Memória Inteligente<br/>Gravação autorizada"]
+  N --> T["Tarefas<br/>Aprovação humana"]
+  C <--> W["WAHA<br/>WhatsApp"]
+  A <--> G["Google Agenda / Meet<br/>Conexão autorizada"]
+  C --> DB[("PostgreSQL")]
+  A --> DB
+  M --> AR[("Arquivos de áudio<br/>isolados por empresa")]
+  M --> DB
+  AR --> FW["Faster-Whisper<br/>Transcrição local"]
+  FW --> DB
+  M -.->|"Só texto, com autorização"| IA["Modelo de IA<br/>Resumo e sugestões"]
+  IA -.-> T
+  T --> DB
+```
+
 ## O que está implementado
 
 - WhatsApp conectado via WAHA (sessão individual), CRM, contatos, oportunidades e indicadores;
@@ -33,3 +57,7 @@ Produto independente NOVAGENTE construído a partir da base open source Vocero C
 ### Outras plataformas
 
 Os arquivos históricos de implantação [Render](render.yaml), [Fly.io](fly.toml) e [Railway](railway.toml) estão preservados como referências técnicas. Para a NOVAGENTE com WAHA e transcrição use o Compose independente descrito acima.
+
+## Instalação como aplicativo (PWA)
+
+Android, iPhone e computador podem instalar o PAINEL NOVAGENTE via HTTPS. Consulte o [guia de instalação](docs/PWA.md). Por segurança, conversas, reuniões e gravações não são armazenadas para acesso offline.

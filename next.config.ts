@@ -12,6 +12,26 @@ const nextConfig: NextConfig = {
   // symlinks que requieren permisos elevados, así que ahí se omite.
   output: process.platform === "win32" ? undefined : "standalone",
   // El paquete `postgres` usa APIs de Node que no deben empaquetarse en el bundle.
+  async headers() {
+    return [
+      {
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
+        source: "/offline.html",
+        headers: [{ key: "Cache-Control", value: "no-cache" }],
+      },
+      {
+        source: "/manifest.webmanifest",
+        headers: [{ key: "Content-Type", value: "application/manifest+json" }],
+      },
+    ];
+  },
   serverExternalPackages: ["postgres"],
   // Se congelan al construir: lo que queda aquí va dentro del binario y no
   // cambia en tiempo de ejecución. El commit solo se congela si `SOURCE_COMMIT`
