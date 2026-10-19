@@ -1,11 +1,9 @@
 import {
   CalendarDays,
-  Mic2,
   ChartColumn,
   FlaskConical,
   Inbox,
   LayoutDashboard,
-  Kanban,
   ListChecks,
   Settings,
   Sparkles,
@@ -61,13 +59,11 @@ export function appNavGroups({
   const trabajo: NavItem[] = [
     { href: "/inicio", label: "Visão geral", icon: LayoutDashboard },
     { href: "/inbox", label: "Atendimentos", icon: Inbox, badge: true },
-    { href: "/pipeline", label: "Oportunidades", icon: Kanban },
     { href: "/contacts", label: "Contatos", icon: Users },
   ];
   // Citas va después de Contactos: es el paso siguiente de un trato, no una
   // sección aparte.
   if (agenda) trabajo.push({ href: "/bookings", label: "Agenda", icon: CalendarDays });
-  trabajo.push({ href: "/memoria", label: "Memória inteligente", icon: Mic2 });
 
   const agente: NavItem[] = [];
   // Un miembro del equipo no puede hacer ninguno de los pasos de la guía.

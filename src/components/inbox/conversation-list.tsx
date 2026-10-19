@@ -118,13 +118,15 @@ export function ConversationList({
   // miraba el preview, y como el agente nombra al dueño en sus propios
   // mensajes, buscar ese nombre devolvía media bandeja. Encima era una
   // búsqueda de mensajes a medias: solo el último de cada hilo, no el historial.
-  const searched = conversations.filter(
-    (c) =>
-      matchesQuery(query, {
-        text: [c.contact.name],
-        phone: c.contact.phone,
-      }) && (stage === "all" || c.stageName === stage)
+  const nameMatches = conversations.filter((c) =>
+    matchesQuery(query, {
+      text: [c.contact.name],
+      phone: c.contact.phone,
+    })
   );
+  const searched = nameMatches.filter(c => stage === "all" || c.stageName === stage);
+  // Os contadores mostram todas as fases, não apenas a fase atualmente selecionada.
+  const stageBase = inbox === "all" ? nameMatches : nameMatches.filter(c => c.channel === inbox);
   // La bandeja elegida es el filtro de AFUERA: "Todas" y "Não lidas" cuentan
   // dentro de ella, no sobre la suma de los dos canales.
   const inInbox =
@@ -260,7 +262,7 @@ export function ConversationList({
           <select
             value={stage}
             onChange={(e) => setStage(e.target.value)}
-            aria-label="Filtrar por etapa del embudo"
+            aria-label="Filtrar por fase do atendimento"
             className={cn(
               "ml-auto min-w-0 max-w-[42%] truncate rounded-full border px-2 py-[5px] text-[12.5px] font-semibold transition-colors",
               FOCO_SEPARADO,
@@ -269,7 +271,7 @@ export function ConversationList({
                 : "border-brand bg-brand text-brand-fg"
             )}
           >
-            <option value="all">Toda etapa</option>
+            <option value="all">Todas as fases</option>
             {stages.map((s) => (
               <option key={s} value={s}>
                 {s}
@@ -279,6 +281,23 @@ export function ConversationList({
         )}
       </div>
 
+      {/* Etapas comerciais integradas: uma nova mensagem não altera a fase. */}
+      <div className="flex gap-1.5 overflow-x-auto border-b px-3 py-2" aria-label="Filtrar atendimentos por fase">
+        {[
+          { name: "Novo contato", display: "Novo contato" },
+          { name: "Em atendimento", display: "Em atendimento" },
+          { name: "Qualificado", display: "Qualificado" },
+          { name: "Perdido", display: "Perdido" },
+          { name: "Cliente", display: "🏆 Clientes" },
+        ].map(({ name, display }) => (
+          <button key={name} type="button" onClick={() => setStage(stage === name ? "all" : name)}
+            aria-pressed={stage === name}
+            className={cn("shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-colors",
+              stage === name ? "border-brand bg-brand text-brand-fg" : "bg-card hover:bg-accent")}>
+            {display} <span className="opacity-70">{stageBase.filter(c => c.stageName === name).length}</span>
+          </button>
+        ))}
+      </div>
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <p className="p-6 text-center text-xs text-text-3">Cargando…</p>

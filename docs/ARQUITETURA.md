@@ -117,3 +117,4 @@ flowchart LR
 **Planejado:** bot que entra em reuniões, identificação nominal de vozes, push de tarefas, retenção/apagamento automatizados e acesso público com domínio e políticas para clientes. O repositório continua privado até decisão do proprietário.
 
 Consulte [PWA](PWA.md) e [Memória Inteligente](MEMORIA-INTELIGENTE-NOVAGENTE.md).
+\n\n## Atualização do atendimento\n\nVeja [Fluxo integrado de Atendimento, Agenda e Contatos](FLUXO-ATENDIMENTO-THAIS.md), incluindo as transições e a preservação do histórico.\n

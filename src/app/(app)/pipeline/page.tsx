@@ -1,7 +1,4 @@
-import { PipelineClient } from "@/components/pipeline/pipeline-client";
-
-export const dynamic = "force-dynamic";
-
-export default function PipelinePage() {
-  return <PipelineClient />;
+import { redirect } from "next/navigation";
+export default function FormerPipelinePage() {
+  redirect("/contacts?visao=funil");
 }

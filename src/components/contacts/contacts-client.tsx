@@ -13,6 +13,8 @@ import {
   Upload,
   UserPlus,
   Users,
+  Columns3,
+  List,
 } from "lucide-react";
 import type { ContactDto } from "@/lib/types";
 import { formatPhone } from "@/lib/utils";
@@ -32,6 +34,7 @@ import { StartConversation } from "./start-conversation";
 export function ContactsClient() {
   const router = useRouter();
   const [contacts, setContacts] = useState<ContactDto[]>([]);
+  const [view, setView] = useState<"funil"|"lista">("funil");
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("all");
   const [stages, setStages] = useState<string[]>([]);
@@ -94,15 +97,25 @@ export function ContactsClient() {
     <div className="flex h-full flex-col">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-[17px] font-bold tracking-tight">Contactos</h2>
+          <h2 className="text-[17px] font-bold tracking-tight">Contatos</h2>
           <Button size="sm" onClick={() => setCreando(true)}>
             <UserPlus className="mr-1.5 h-4 w-4" strokeWidth={1.8} />
-            Nuevo contacto
+            Novo contato
           </Button>
           <Button size="sm" variant="secondary" onClick={() => setImportando(true)}>
             <Upload className="mr-1.5 h-4 w-4" strokeWidth={1.8} />
             Importar
           </Button>
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border bg-card p-1" aria-label="Visualização dos contatos">
+          <button type="button" onClick={()=>setView("funil")} aria-pressed={view==="funil"}
+            className={"flex items-center gap-1 rounded-md px-2 py-1.5 text-xs " + (view==="funil"?"bg-brand text-brand-fg":"hover:bg-accent")}>
+            <Columns3 className="h-4 w-4"/> Funil
+          </button>
+          <button type="button" onClick={()=>setView("lista")} aria-pressed={view==="lista"}
+            className={"flex items-center gap-1 rounded-md px-2 py-1.5 text-xs " + (view==="lista"?"bg-brand text-brand-fg":"hover:bg-accent")}>
+            <List className="h-4 w-4"/> Lista
+          </button>
         </div>
         <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -167,6 +180,40 @@ export function ContactsClient() {
               description="Quem conversar com seu WhatsApp será cadastrado automaticamente aqui."
             />
           )
+        ) : view === "funil" ? (
+          <div className="flex min-h-0 gap-3 overflow-x-auto pb-4">
+            {[
+              {name:"Novo contato", label:"Novo contato"},
+              {name:"Em atendimento",label:"Em atendimento"},
+              {name:"Qualificado",label:"Qualificado / negociação"},
+              {name:"Cliente",label:"🏆 Clientes conquistados"},
+              {name:"Perdido",label:"Perdidos"},
+              {name:"__outras__",label:"Outras fases"},
+            ].map(({name,label}) => {
+              const canonical=new Set(["Novo contato","Em atendimento","Qualificado","Cliente","Perdido"]);
+              const group=contacts.filter(c => name==="__outras__"
+                ? !!c.stageName && !canonical.has(c.stageName)
+                : (c.stageName??"Novo contato")===name);
+              return <section key={name} className="w-[255px] min-w-[255px] self-start rounded-2xl border bg-subtle p-3">
+                <header className="mb-3 flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold">{label}</h3>
+                  <span className="rounded-full bg-card px-2 py-1 text-xs font-semibold">{group.length}</span>
+                </header>
+                <div className="space-y-2">
+                  {group.length===0 && <p className="rounded-xl bg-card p-3 text-xs text-text-3">Nenhum contato nesta fase.</p>}
+                  {group.map(c=><Link key={c.id} href={"/inbox?contact="+c.id}
+                    className="block rounded-xl border bg-card p-3 transition hover:border-brand" title="Abrir atendimento">
+                    <div className="flex items-center gap-2">
+                      <ContactAvatar name={c.name} seed={c.id}/>
+                      <span className="min-w-0 truncate text-sm font-semibold">{c.name}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-text-3">{formatPhone(c.phone)}</p>
+                    {c.notes && <p className="mt-2 line-clamp-3 text-xs leading-5 text-text-2">{c.notes}</p>}
+                  </Link>)}
+                </div>
+              </section>;
+            })}
+          </div>
         ) : (
           <ul className="space-y-2">
             {contacts.map((c) => (

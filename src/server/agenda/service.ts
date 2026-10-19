@@ -228,13 +228,11 @@ export async function createSessionBooking(input: {
 
   // Efectos secundarios: ninguno puede revertir la cita.
   const delivered = await deliverMeeting(booking, settings, contactName);
-  await advanceLeadStage(
-    input.organizationId,
-    contactId,
-    input.source === "ai" ? "bot" : "dueno"
-  ).catch((err) => {
-    console.warn(`[agenda] avance de etapa falló: ${err}`);
-  });
+  if (input.source === "ai") {
+    await advanceLeadStage(input.organizationId, contactId, "bot").catch((err) => {
+      console.warn("[agenda] falha ao avançar estágio:", err);
+    });
+  }
 
   publish(input.organizationId, {
     type: "booking.updated",

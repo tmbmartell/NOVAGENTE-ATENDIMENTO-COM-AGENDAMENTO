@@ -32,6 +32,7 @@ import { BlockDialog } from "./block-dialog";
 import { BookingDrawer, type ActResult } from "./booking-drawer";
 import type { Booking } from "./booking-look";
 import { CalendarToolbar } from "./calendar-toolbar";
+import { MemoryClient } from "@/components/meeting-memory/memory-client";
 import { MonthGrid } from "./month-grid";
 import { TimeGrid } from "./time-grid";
 
@@ -46,7 +47,7 @@ import { TimeGrid } from "./time-grid";
  */
 
 /** Preferencias de quien mira, en su navegador: no son datos del negocio. */
-const VIEW_KEY = "vocero:citas:vista";
+const VIEW_KEY = "novagente:agenda:vista";
 const CANCELLED_KEY = "vocero:citas:canceladas";
 const TESTS_KEY = "vocero:citas:pruebas";
 
@@ -75,12 +76,14 @@ const keyOf = (r: DateRange) => `${r.from}|${r.to}`;
 
 export function BookingsClient({
   initialView,
+  initialArea = "calendario",
   initialDate,
   initialListTo,
   timezone: initialTimezone,
   weeklyHours: initialWeeklyHours,
 }: {
   initialView: CalendarView | null;
+  initialArea?: "calendario" | "memoria";
   initialDate: string;
   initialListTo: string | null;
   timezone: string;
@@ -89,6 +92,12 @@ export function BookingsClient({
   // La vista se resuelve al montar (URL › última usada › tamaño de pantalla):
   // el servidor no sabe si esto es un celular.
   const [view, setView] = useState<CalendarView | null>(null);
+  const [area, setArea] = useState<"calendario"|"memoria">(initialArea);
+  function changeArea(next: "calendario" | "memoria") {
+    setArea(next);
+    if (next === "memoria") window.history.replaceState(null, "", "/bookings?aba=memoria");
+    else window.history.replaceState(null, "", "/bookings");
+  }
   const [anchor, setAnchor] = useState(initialDate);
   const [listTo, setListTo] = useState<string | null>(initialListTo);
   const [timezone, setTimezone] = useState(initialTimezone);
@@ -176,7 +185,7 @@ export function BookingsClient({
 
   // La URL dice lo que se está viendo: recargar o compartir abre ahí mismo.
   useEffect(() => {
-    if (!view) return;
+    if (!view || area !== "calendario") return;
     const params = new URLSearchParams({ vista: view });
     if (view === "lista") {
       params.set("desde", anchor);
@@ -185,7 +194,7 @@ export function BookingsClient({
       params.set("fecha", anchor);
     }
     window.history.replaceState(null, "", `?${params.toString()}`);
-  }, [view, anchor, listTo]);
+  }, [view, anchor, listTo, area]);
 
   const today = now === null ? null : dayIsoInTz(new Date(now), timezone);
   const nowMinutes = now === null ? 0 : wallClock(new Date(now), timezone).minutes;
@@ -305,11 +314,21 @@ export function BookingsClient({
     return { ok: true };
   }
 
+  if (area === "memoria") {
+    return <div className="flex h-full min-h-0 flex-col">
+      <div className="flex shrink-0 flex-wrap gap-2 border-b bg-background px-4 py-3 sm:px-6">
+        <button type="button" className="rounded-xl border px-4 py-2 text-sm font-semibold hover:bg-accent" onClick={()=>changeArea("calendario")}>Calendário</button>
+        <button type="button" aria-current="page" className="rounded-xl border border-brand bg-brand-veil px-4 py-2 text-sm font-semibold" onClick={()=>changeArea("memoria")}>Memória inteligente · Reuniões gravadas</button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-hidden"><MemoryClient /></div>
+    </div>;
+  }
+
   if (!view || !range || !today) {
     return (
       <div className="flex h-full flex-col">
         <header className="border-b px-4 py-3 sm:px-6 sm:py-4">
-          <h2 className="text-[17px] font-bold tracking-tight">Citas</h2>
+          <h2 className="text-[17px] font-bold tracking-tight">Agenda</h2>
         </header>
         <p className="p-6 text-sm text-text-3">Cargando…</p>
       </div>
@@ -320,6 +339,15 @@ export function BookingsClient({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <div className="flex items-center gap-2 border-b bg-background px-4 py-3 sm:px-6">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">Compromissos e reuniões</p>
+          <p className="text-xs text-text-3">Consulte os horários e acompanhe os encontros da equipe.</p>
+        </div>
+        <button type="button" onClick={()=>changeArea("memoria")} className="rounded-xl border border-brand px-3 py-2 text-xs font-semibold text-brand-text transition hover:bg-brand-veil">
+          Memória inteligente · Gravações
+        </button>
+      </div>
       <CalendarToolbar
         view={view}
         anchor={anchor}

@@ -7,6 +7,7 @@ import { apiError, parseBody, withAuth } from "@/lib/api";
 import { getConversation, listMessages } from "@/server/inbox/queries";
 import { serializeMessage } from "@/server/inbox/ingest";
 import { SendError, sendStructured, sendText } from "@/server/inbox/send";
+import { advanceFirstHumanReply } from "@/server/inbox/advance-human-attendance";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +102,10 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
               kind: "contacts",
               contacts: data.contacts,
             });
+    // Só primeiro atendimento humano avança a fase, sem alterar fases posteriores.
+    // Se a atualização comercial falhar, uma mensagem que já saiu não pode falhar.
+    await advanceFirstHumanReply(session.organizationId, id, session.userId)
+      .catch((err) => console.error("[novagente] avanço de atendimento:", err));
     return Response.json({ messageId: result.messageId });
   } catch (err) {
     if (err instanceof SendError) {

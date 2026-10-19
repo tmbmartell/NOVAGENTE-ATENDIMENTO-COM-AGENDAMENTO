@@ -14,14 +14,14 @@ import { cn } from "@/lib/utils";
  */
 
 const VIEW_LABEL: Record<CalendarView, string> = {
-  dia: "Día",
+  dia: "Dia",
   semana: "Semana",
   mes: "Mes",
   lista: "Lista",
 };
 
 const PERIOD: Record<CalendarView, string> = {
-  dia: "día",
+  dia: "dia",
   semana: "semana",
   mes: "mes",
   lista: "rango",
@@ -56,11 +56,11 @@ export function CalendarToolbar({
 
   return (
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 sm:px-6">
-      <h2 className="mr-1 text-[17px] font-bold tracking-tight">Citas</h2>
+      <h2 className="mr-1 text-[17px] font-bold tracking-tight">Agenda</h2>
 
       <div className="flex items-center gap-1">
         <Button variant="outline" size="sm" onClick={onToday}>
-          Hoy
+          Hoje
         </Button>
         <NavButton label={`${PERIOD[view]} anterior`} onClick={() => onShift(-1)}>
           <ChevronLeft className="h-4 w-4" />
@@ -82,9 +82,9 @@ export function CalendarToolbar({
             onChange={(e) => e.target.value && onListRange(e.target.value, listTo)}
             className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-brand focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-brand-soft"
           />
-          <span className="text-text-3">al</span>
+          <span className="text-text-3">até</span>
           <label className="sr-only" htmlFor="lista-hasta">
-            Hasta
+            Até
           </label>
           <input
             id="lista-hasta"

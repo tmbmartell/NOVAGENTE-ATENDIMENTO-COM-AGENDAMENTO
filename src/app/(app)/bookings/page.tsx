@@ -8,7 +8,7 @@ import { getSettings } from "@/server/agenda/settings";
 
 export const dynamic = "force-dynamic";
 
-type Params = { vista?: string; fecha?: string; desde?: string; hasta?: string };
+type Params = { vista?: string; fecha?: string; desde?: string; hasta?: string; aba?: string };
 
 /**
  * 215 — Citas en calendario. La vista y la fecha viven en la URL
@@ -41,6 +41,7 @@ export default async function BookingsPage({
 
   return (
     <BookingsClient
+      initialArea={params.aba === "memoria" ? "memoria" : "calendario"}
       initialView={view}
       initialDate={date}
       initialListTo={

@@ -20,7 +20,7 @@ describe("barra lateral agrupada", () => {
     const groups = appNavGroups({ role: "member" });
     expect(groups.map((g) => g.title)).toEqual(["OPERAÇÃO", "INTELIGÊNCIA", undefined]);
     expect(labels(groups)).toEqual([
-      ["Visão geral", "Atendimentos", "Oportunidades", "Contatos", "Memória inteligente"],
+      ["Visão geral", "Atendimentos", "Contatos"],
       ["Agente de IA", "Testes de IA"],
       ["Indicadores"],
     ]);
@@ -31,13 +31,13 @@ describe("barra lateral agrupada", () => {
     expect(trabajo!.items.map((i) => i.label)).toEqual([
       "Visão geral",
       "Atendimentos",
-      "Oportunidades",
       "Contatos",
       "Agenda",
-      "Memória inteligente",
     ]);
     expect(trabajo!.items.find((i) => i.href === "/bookings")?.label).toBe("Agenda");
-    expect(trabajo!.items.at(-1)!.href).toBe("/memoria");
+    expect(trabajo!.items.at(-1)!.href).toBe("/bookings");
+    expect(trabajo!.items.map((i) => i.href)).not.toContain("/pipeline");
+    expect(trabajo!.items.map((i) => i.href)).not.toContain("/memoria");
   });
 
   it("la guía de inicio abre el grupo Agente solo para quien configura", () => {

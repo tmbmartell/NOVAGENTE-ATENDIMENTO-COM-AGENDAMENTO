@@ -11,6 +11,7 @@ import {
 import { upsertFicha } from "@/server/bot/ficha";
 import { pauseConversations } from "@/server/contacts-import";
 import { cuentaComoAnuncio } from "@/lib/anuncios";
+import { publish } from "@/server/events/bus";
 import {
   anuncioDelContacto,
   repararImagenSiFalta,
@@ -109,6 +110,16 @@ export const PATCH = withAuth(async (session, req: Request, ctx: Params) => {
   // tendría efecto hasta que naciera otra.
   if (body.data.aiPaused !== undefined) {
     await pauseConversations(session.organizationId, [id], body.data.aiPaused);
+  }
+  if (body.data.name !== undefined || body.data.notes !== undefined) {
+    const conversations=await db.select({ id:schema.conversation.id }).from(schema.conversation)
+      .where(scoped(schema.conversation.organizationId, session.organizationId, eq(schema.conversation.contactId,id)));
+    for (const row of conversations) {
+      publish(session.organizationId, {
+        type: "conversation.updated",
+        data: { conversation: { id: row.id } },
+      });
+    }
   }
   const anuncio = await anuncioDelContacto(session.organizationId, id);
   return Response.json({

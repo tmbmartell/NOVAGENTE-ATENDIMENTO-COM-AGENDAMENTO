@@ -15,6 +15,12 @@ A imagem acima mostra a relação entre as áreas. Os recursos externos, como Go
 
 **Leia a [sinopse completa, explicada módulo por módulo](docs/SINOPSE.md), ou abra o [organograma técnico editável](docs/ARQUITETURA.md).**
 
+## Atendimento integrado
+
+O atendimento reúne **Novo contato, Em atendimento, Qualificado, Perdido e Cliente conquistado** diretamente na conversa, com nome editável, histórico interno por atendente e agendamento vinculado ao cliente. **Contatos** apresenta o funil visual; **Agenda** reúne calendário e Memória Inteligente.
+
+[Conheça o novo fluxo de atendimento definido com Thaís](docs/FLUXO-ATENDIMENTO-THAIS.md).
+
 ## Organograma da arquitetura
 
 Visualização direta no GitHub. Veja o [organograma completo e os fluxos técnicos](docs/ARQUITETURA.md).

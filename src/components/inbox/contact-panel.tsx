@@ -10,6 +10,8 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  Trophy,
+  Pencil,
 } from "lucide-react";
 import {
   externalAnswerLabel,
@@ -32,6 +34,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FichaPanel } from "@/components/ficha-panel";
 import { DeleteConversationDialog } from "./delete-conversation-dialog";
+import { ContactHistory } from "./contact-history";
+import { ScheduleFromChat } from "./schedule-from-chat";
 
 const HANDOFF_LABELS: Record<string, string> = {
   cliente: "El cliente pidió un humano",
@@ -61,6 +65,12 @@ export function ContactPanel({
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [notes, setNotes] = useState("");
+  const [name, setName] = useState(conversation.contact.name);
+  const [editingName, setEditingName] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [stageError, setStageError] = useState("");
+  const [lossDialog, setLossDialog] = useState<string | null>(null);
+  const [lossReason, setLossReason] = useState("nunca_contesto");
   const [ficha, setFicha] = useState<FichaDto>({});
   const [notesLoaded, setNotesLoaded] = useState(false);
   const [savingNotes, setSavingNotes] = useState(false);
@@ -103,6 +113,8 @@ export function ContactPanel({
     ]).catch(() => [null, null]);
     if (detail) {
       setNotes(detail.contact?.notes ?? "");
+      setName(detail.contact?.name ?? conversation.contact.name);
+      setEditingName(false);
       setFicha(detail.contact?.ficha ?? {});
       setCurrentStageId(detail.stage?.id ?? null);
       setLeadId(detail.lead?.id ?? null);
@@ -110,7 +122,7 @@ export function ContactPanel({
     }
     if (stagesRes) setStages(stagesRes.stages);
     setNotesLoaded(true);
-  }, [contactId, loadBrain]);
+  }, [contactId, loadBrain, conversation.contact.name]);
 
   // Refetch en vivo (etapa/lead + quién responde) SIN tocar las notas, para
   // no pisar lo que el operador esté escribiendo. Lo dispara el SSE.
@@ -144,15 +156,43 @@ export function ContactPanel({
     void refreshLive();
   }, [refreshKey, notesLoaded, refreshLive]);
 
-  async function moveToStage(stageId: string) {
+  async function moveToStage(stageId: string, reason?: string) {
     if (!leadId || stageId === currentStageId) return;
-    setCurrentStageId(stageId); // optimista
-    await fetch(`/api/pipeline/leads/${leadId}`, {
+    const previousStage = currentStageId;
+    setStageError("");
+    setCurrentStageId(stageId);
+    const result=await fetch("/api/pipeline/leads/" + leadId, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ stageId, position: 0 }),
+      body: JSON.stringify({ stageId, position: 0, ...(reason?{lossReason:reason}:{}) }),
     }).catch(() => null);
+    if (!result?.ok) {
+      setCurrentStageId(previousStage);
+      const data=await result?.json().catch(()=>null) as { error?: { message: string } } | null;
+      setStageError(data?.error?.message??"Não foi possível atualizar a fase.");
+      return;
+    }
+    setLossDialog(null);
     void refreshLive();
+  }
+
+  async function saveName() {
+    const next=name.trim();
+    if (!next || next.length>120) return;
+    setSavingName(true);setStageError("");
+    const res=await fetch("/api/contacts/" + contactId, {
+      method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({name:next}),
+    }).catch(()=>null);
+    setSavingName(false);
+    if (!res?.ok) {setStageError("Não foi possível salvar o nome.");return;}
+    setEditingName(false);
+    void refreshLive();
+  }
+
+  function chooseStage(stageId: string) {
+    const target=stages.find(s=>s.id===stageId);
+    if (target?.kind==="lost") {setLossDialog(stageId);return;}
+    void moveToStage(stageId);
   }
 
   /** Manda SOLO lo que cambió: el servidor hace merge (ver `server/bot/ficha`). */
@@ -217,6 +257,19 @@ export function ContactPanel({
                 {formatPhone(conversation.contact.phone)}
               </p>
             </div>
+          </div>
+
+          <div className="mt-3 rounded-lg border bg-subtle p-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold">Nome do contato</span>
+              <button type="button" className="flex items-center gap-1 text-xs text-brand-text underline"
+                onClick={()=>setEditingName(v=>!v)}><Pencil className="h-3.5 w-3.5"/> {editingName?"Cancelar":"Editar nome"}</button>
+            </div>
+            {editingName ? <div className="mt-2 flex gap-2">
+              <input className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 text-xs" value={name} maxLength={120}
+                onChange={e=>setName(e.target.value)} placeholder="Nome que a equipe reconhecerá"/>
+              <Button size="sm" disabled={savingName || !name.trim()} onClick={()=>void saveName()}>{savingName?"Salvando…":"Salvar"}</Button>
+            </div> : <p className="mt-1 text-xs text-text-2">{name}</p>}
           </div>
 
           {conversation.handoffAt && (
@@ -337,7 +390,9 @@ export function ContactPanel({
         {/* Stepper de etapa */}
         {stages.length > 0 && leadId && (
           <section className="border-b p-4">
-            <p className="kicker mb-3">Etapa del pipeline</p>
+            <p className="kicker mb-3">Fase do atendimento</p>
+            <p className="mb-3 text-xs text-text-3">O cliente permanece na mesma fase quando envia novas mensagens. A equipe decide quando avançar.</p>
+            {stageError && <p role="alert" className="mb-2 text-xs text-danger-text">{stageError}</p>}
             <ol>
               {stages.map((s, i) => {
                 const done = currentIndex >= 0 && i < currentIndex;
@@ -353,7 +408,7 @@ export function ContactPanel({
                       />
                     )}
                     <button
-                      onClick={() => void moveToStage(s.id)}
+                      onClick={() => chooseStage(s.id)}
                       aria-label={`Mover a ${s.name}`}
                       className={cn(
                         "relative z-10 mt-0.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full transition-colors",
@@ -365,13 +420,14 @@ export function ContactPanel({
                       {done && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
                     </button>
                     <button
-                      onClick={() => void moveToStage(s.id)}
+                      onClick={() => chooseStage(s.id)}
                       className={cn(
                         "text-left text-[13px]",
                         current ? "font-[650] text-brand-text" : "text-text-2 hover:text-foreground"
                       )}
                     >
-                      {s.name}
+                      {s.kind === "won" ? "🏆 Cliente conquistado" : s.name}
+                      {s.kind === "won" && <Trophy className="ml-1 inline h-3.5 w-3.5 text-success-text"/>}
                     </button>
                   </li>
                 );
@@ -386,10 +442,11 @@ export function ContactPanel({
 
         {/* Notas */}
         <section className={cn("p-4", onDeleteConversation && "border-b")}>
-          <p className="kicker mb-2">Notas</p>
+          <p className="kicker mb-2">Resumo atual para o próximo atendente</p>
+          <p className="mb-2 text-xs text-text-3">O que a equipe precisa saber para continuar a conversa sem repetir perguntas?</p>
           <Textarea
             rows={5}
-            placeholder="Notas internas sobre este contacto…"
+            placeholder="Necessidade, serviço desejado, próximos passos…"
             value={notes}
             disabled={!notesLoaded}
             onChange={(e) => setNotes(e.target.value)}
@@ -405,6 +462,8 @@ export function ContactPanel({
           </Button>
         </section>
 
+        <ContactHistory contactId={contactId} />
+        <ScheduleFromChat contactId={contactId} conversationId={conversation.id} />
         {/* 026 — Al fondo y sin color de alarma: está a la mano de quien la
             busca, no en el camino de quien solo vino a leer la ficha. */}
         {onDeleteConversation && (
@@ -421,6 +480,27 @@ export function ContactPanel({
         )}
       </div>
 
+      {lossDialog && (
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-overlay p-4" role="dialog" aria-modal="true" aria-label="Registrar cliente perdido">
+          <div className="w-full max-w-sm rounded-2xl border bg-popover p-5 shadow-pop">
+            <h3 className="text-base font-bold">Marcar como perdido</h3>
+            <p className="my-3 text-sm text-text-2">Registre o motivo para que a equipe conheça o contexto. O histórico será preservado.</p>
+            <select value={lossReason} onChange={e=>setLossReason(e.target.value)}
+              className="w-full rounded-lg border bg-background p-2 text-sm">
+              <option value="nunca_contesto">Parou de responder</option>
+              <option value="precio">Preço</option>
+              <option value="sin_presupuesto">Sem orçamento</option>
+              <option value="no_es_perfil">Fora do perfil</option>
+              <option value="eligio_otro">Escolheu outro fornecedor</option>
+              <option value="otro">Outro motivo</option>
+            </select>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="secondary" size="sm" onClick={()=>setLossDialog(null)}>Cancelar</Button>
+              <Button size="sm" onClick={()=>void moveToStage(lossDialog,lossReason)}>Confirmar perda</Button>
+            </div>
+          </div>
+        </div>
+      )}
       {confirmingDelete && onDeleteConversation && (
         <DeleteConversationDialog
           contactName={conversation.contact.name}

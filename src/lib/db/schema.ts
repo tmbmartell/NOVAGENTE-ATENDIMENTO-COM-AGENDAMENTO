@@ -1315,3 +1315,20 @@ export const meetingTask = pgTable(
   },
   (t) => [index("meeting_task_org_recording_idx").on(t.organizationId, t.recordingId)]
 );
+
+/** Registro imutável de contexto entre atendentes: nunca substitui conversa ou notas anteriores. */
+export const contactServiceNote = pgTable(
+  "contact_service_note",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+    contactId: text("contact_id").notNull().references(() => contact.id, { onDelete: "cascade" }),
+    authorUserId: text("author_user_id").references(() => user.id, { onDelete: "set null" }),
+    category: text("category").notNull().default("geral"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("contact_service_note_org_contact_idx").on(t.organizationId, t.contactId, t.createdAt),
+  ]
+);
