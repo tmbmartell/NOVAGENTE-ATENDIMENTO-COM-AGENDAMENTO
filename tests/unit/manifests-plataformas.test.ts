@@ -203,7 +203,7 @@ describe("railway.toml: solo build, healthcheck y reinicio; el resto, con la CLI
 describe("la documentación lleva a los manifests", () => {
   it("el README tiene la sección y enlaza los tres; INSTALL-IA.md apunta a ella", () => {
     const readme = leer("README.md");
-    expect(readme).toMatch(/^### Otras plataformas/m);
+    expect(readme).toMatch(/^### Outras plataformas/m);
     for (const archivo of ["render.yaml", "fly.toml", "railway.toml"]) {
       expect(readme).toContain(`](${archivo})`);
     }

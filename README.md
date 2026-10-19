@@ -28,3 +28,8 @@ Login obrigatório, arquivos por organização, autorização registrada para gr
 ## Origem e licença
 
 Produto independente NOVAGENTE construído a partir da base open source Vocero CRM (https://github.com/kevinrivm/vocero-crm). A licença MIT e os créditos originais permanecem no arquivo LICENSE. Não há parceria com os autores da base.
+
+
+### Outras plataformas
+
+Os arquivos históricos de implantação [Render](render.yaml), [Fly.io](fly.toml) e [Railway](railway.toml) estão preservados como referências técnicas. Para a NOVAGENTE com WAHA e transcrição use o Compose independente descrito acima.
