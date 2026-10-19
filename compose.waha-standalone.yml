@@ -1,0 +1,83 @@
+name: vocero-waha-standalone
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vocero
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: vocero
+    volumes:
+      - vocero_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vocero -d vocero"]
+      interval: 10s
+      retries: 10
+  crm:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18080:3000"
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL}
+      DATABASE_URL: postgresql://vocero:${POSTGRES_PASSWORD}@database:5432/vocero
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN}
+      ALLOW_SIGNUP: ${ALLOW_SIGNUP}
+      AGENDA: "on"
+      NOVAGENTE_DEFAULT_TIMEZONE: America/Porto_Velho
+      MEDIA_DIR: /data/media
+      WAHA_ENABLED: "true"
+      WAHA_URL: http://waha:3000
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WAHA_WEBHOOK_HMAC_KEY: ${WAHA_WEBHOOK_HMAC_KEY}
+      WAHA_SESSION: novagente
+      WAHA_DASHBOARD_URL: ${WAHA_DASHBOARD_URL:-}
+    volumes:
+      - vocero_media:/data
+    depends_on:
+      database:
+        condition: service_healthy
+  meeting-worker:
+    profiles: ["transcription"]
+    build:
+      context: .
+      dockerfile: Dockerfile.meeting-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://vocero:${POSTGRES_PASSWORD}@database:5432/vocero
+      MEDIA_DIR: /data/media
+      WHISPER_MODEL: base
+      WHISPER_CPU_THREADS: "2"
+    volumes:
+      - vocero_media:/data
+      - novagente_whisper_models:/models
+    depends_on:
+      database:
+        condition: service_healthy
+    mem_limit: 2500m
+    cpus: 2
+  waha:
+    image: devlikeapro/waha:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18081:3000"
+    environment:
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WAHA_DASHBOARD_USERNAME: ${WAHA_DASHBOARD_USERNAME}
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD}
+      WHATSAPP_HOOK_URL: http://crm:3000/api/webhooks/waha
+      WHATSAPP_HOOK_EVENTS: message
+      WHATSAPP_HOOK_HMAC_KEY: ${WAHA_WEBHOOK_HMAC_KEY}
+    volumes:
+      - vocero_waha_sessions:/app/.sessions
+      - vocero_waha_media:/app/.media
+    depends_on:
+      - crm
+volumes:
+  vocero_postgres:
+  vocero_media:
+  vocero_waha_sessions:
+  vocero_waha_media:
+  novagente_whisper_models:
